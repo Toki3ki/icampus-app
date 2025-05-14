@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
-import Logo from "../assets/logo_p5r.png";
+import Logo from "../assets/logo.svg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { loginRoute } from "../utils/APIRoutes";
-import BackgroundImage from '../assets/bg_mln.jpg'; // 新增背景图
 
 export default function Login() {
   const navigate = useNavigate();
@@ -57,7 +56,7 @@ export default function Login() {
           JSON.stringify(data.user)
         );
 
-        navigate("/Dashboard");
+        navigate("/");
       }
     }
   };
@@ -67,7 +66,7 @@ export default function Login() {
       <FormContainer>
         <form action="" onSubmit={(event) => handleSubmit(event)}>
           <div className="brand">
-            <img src={Logo} alt="cs_logo" />
+            <img src={Logo} alt="logo" />
             <h1>ICAMPUS</h1>
           </div>
           <input
@@ -94,27 +93,6 @@ export default function Login() {
   );
 }
 
-// 新增 OuterContainer 样式，包裹整个页面
-const OutContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  min-height: 100vh;
-  // background-color:rgb(245, 245, 245); /* 可选：添加背景色以区分 */
-  background-image: url(${BackgroundImage}); /* 设置背景图 */
-  background-size: cover; /* 铺满容器 */
-  background-position: center; /* 居中 */
-  background-repeat: no-repeat; /* 不重复 */
-  padding: 2rem;
-  box-sizing: border-box;
-
-  /* 限制最大宽度，防止页面过度拉伸 */
-  max-width: 1440px; /* 可根据需要调整，例如 1280px 或 1600px */
-  margin: 0 auto; /* 水平居中 */
-`;
-
-
 const FormContainer = styled.div`
   height: 100vh;
   width: 100vw;
@@ -123,11 +101,7 @@ const FormContainer = styled.div`
   justify-content: center;
   gap: 1rem;
   align-items: center;
-  // background-color:rgba(222, 210, 224, 0.34);
-  background-image: url(${BackgroundImage}); /* 设置背景图 */
-  background-size: cover; /* 铺满容器 */
-  background-position: center; /* 居中 */
-  background-repeat: no-repeat; /* 不重复 */
+  background-color:rgb(92, 71, 91);
   .brand {
     display: flex;
     align-items: center;
