@@ -1,5 +1,5 @@
-# Snappy - Chat Application 
-Snappy is chat application build with the power of MERN Stack. You can find the tutorial [here](https://www.youtube.com/watch?v=otaQKODEUFs)
+# Icampus - Team Application 
+Icampus. You can find the tutorial [here](https://www.youtube.com/watch?v=otaQKODEUFs)
 
 
 ![login page](./images/icampus_login.png)
