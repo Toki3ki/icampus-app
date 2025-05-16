@@ -215,6 +215,7 @@ const OuterContainer = styled.div`
   background-image: url(${BackgroundImage}); /* 设置背景图 */
   background-size: cover; /* 铺满容器 */
   background-position: center; /* 居中 */
+  background-repeat: no-repeat; /* 不重复 */
   box-sizing: border-box;
 
   /* 限制最大宽度，防止页面过度拉伸 */

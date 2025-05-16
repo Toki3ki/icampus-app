@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { io } from "socket.io-client"; // 引入 socket.io-client
 import Chat from "./Chat"; // 假设 Chat.js 在同一目录下
@@ -8,7 +8,8 @@ import { allUsersRoute, host } from "../utils/APIRoutes";
 import ChatContainer from "../components/ChatContainer";
 import Contacts from "../components/Contacts";
 import Welcome from "../components/Welcome";
-import BackgroundImage from '../assets/bg_mln.jpg'; 
+import BackgroundImage from '../assets/bg_mln.jpg';
+import Logout from "../components/Logout"; 
 
 export default function TaskAssignment() {
   const navigate = useNavigate();
@@ -17,6 +18,10 @@ export default function TaskAssignment() {
   const [contacts, setContacts] = useState([]);
   const [currentChat, setCurrentChat] = useState(undefined);
   const [currentUser, setCurrentUser] = useState(undefined); // 统一用户状态
+  
+  const [currentUserName, setCurrentUserName] = useState(undefined);
+  const [currentUserImage, setCurrentUserImage] = useState(undefined);
+
   const [selectedTab, setSelectedTab] = useState("progress");
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [fileTree, setFileTree] = useState([
@@ -43,6 +48,7 @@ export default function TaskAssignment() {
   document.body.style.overflowY = "auto";
 }, []);
 
+
   // 获取当前用户信息
   useEffect(() => {
     (async () => {
@@ -53,9 +59,11 @@ export default function TaskAssignment() {
         navigate("/login");
         return;
       }
-      setCurrentUser(data);
+      setCurrentUserName(data.username);
+      setCurrentUserImage(data.avatarImage);
     })();
   }, [navigate]);
+
 
   // 初始化 socket 并绑定用户
   useEffect(() => {
@@ -265,10 +273,14 @@ export default function TaskAssignment() {
           <h1>小组空间 / Team Space</h1>
           <h2>现代软件开发方法 / Modern Software Development</h2>
         </div>
+        
         <div className="notification">
           <span role="img" aria-label="envelope">✉️</span>
           <span className="notification-dot" />
+          
+           <Logout />
         </div>
+       
       </div>
 
       {/* 导航标签路径 */}
