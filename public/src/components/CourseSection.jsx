@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 // 静态数据（仅用于测试，可移除如果完全使用 props）
@@ -16,6 +16,48 @@ function CourseSection({ courses = initialCourses }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [addedCourses, setAddedCourses] = useState([]);
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    courseId: null
+  });
+
+  // 修改后的toggleCourse只保留添加功能
+  const toggleCourse = (course) => {
+    if (!addedCourses.some((c) => c.id === course.id)) {
+      setAddedCourses([...addedCourses, course]);
+    }
+  };
+
+  // 右键点击课程卡片
+  const handleContextMenu = (e, courseId) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      courseId
+    });
+  };
+
+  // 删除课程
+  const handleDeleteCourse = (courseId) => {
+    setAddedCourses(addedCourses.filter(c => c.id !== courseId));
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+
+  // 关闭右键菜单
+  const handleCloseContextMenu = () => {
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', handleCloseContextMenu);
+    return () => {
+      document.removeEventListener('click', handleCloseContextMenu);
+    };
+  }, []);
 
   // 搜索课程
   const filteredCourses = courses.filter(
@@ -41,13 +83,14 @@ function CourseSection({ courses = initialCourses }) {
   };
 
   // 添加或移除课程
-  const toggleCourse = (course) => {
-    if (addedCourses.some((c) => c.id === course.id)) {
-      setAddedCourses(addedCourses.filter((c) => c.id !== course.id));
-    } else {
-      setAddedCourses([...addedCourses, course]);
-    }
-  };
+  // const toggleCourse = (course) => {
+  //   if (addedCourses.some((c) => c.id === course.id)) {
+  //     setAddedCourses(addedCourses.filter((c) => c.id !== course.id));
+  //   } 
+  //   else {
+  //     setAddedCourses([...addedCourses, course]);
+  //   }
+  // };
 
   // 排序课程：未添加的在上，已添加的在下
   const sortedCourses = (searchQuery ? filteredCourses : courses).sort((a, b) => {
@@ -107,22 +150,65 @@ function CourseSection({ courses = initialCourses }) {
           </div>
         )}
       </div>
-      <div className="course-list">
-          {addedCourses.map((course) => (
-            <div key={course.id} className="course-card">
-              {course.hasUpdate && <span className="update-dot" />}
-              <h3>
+      
+    {/* </CourseSectionStyled> */}
+{/* 修改后的下拉框 */}
+    {showDropdown && (
+        <div className="dropdown">
+          {sortedCourses.map((course) => (
+            <div key={course.id} className="dropdown-item">
+              <span>
                 {course.name} / {course.nameEn}
-              </h3>
-              <div className="progress-bar">
-                <div style={{ width: `${course.progress}%` }} />
-              </div>
+              </span>
+              <button
+                className={addedCourses.some((c) => c.id === course.id) ? 'added' : 'add'}
+                onClick={() => toggleCourse(course)}
+                disabled={addedCourses.some((c) => c.id === course.id)}
+              >
+                {addedCourses.some((c) => c.id === course.id) ? '已添加' : '添加'}
+              </button>
             </div>
           ))}
-          {addedCourses.length === 0 && (
-            <p className="no-courses">尚未添加课程</p>
-          )}
         </div>
+      )}
+
+      {/* 修改后的课程卡片，添加右键事件 */}
+      <div className="course-list">
+        {addedCourses.map((course) => (
+          <div 
+            key={course.id} 
+            className="course-card"
+            onContextMenu={(e) => handleContextMenu(e, course.id)}
+          >
+            {course.hasUpdate && <span className="update-dot" />}
+            <h3>
+              {course.name} / {course.nameEn}
+            </h3>
+            <div className="progress-bar">
+              <div style={{ width: `${course.progress}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
+        <div 
+          className="context-menu" 
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div 
+            className="context-menu-item delete"
+            onClick={() => handleDeleteCourse(contextMenu.courseId)}
+          >
+            删除课程
+          </div>
+        </div>
+      )}
     </CourseSectionStyled>
   );
 }
@@ -299,6 +385,27 @@ const CourseSectionStyled = styled.div`
     text-align: center;
     color: #888;
     font-size: 1rem;
+  }
+    .context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    padding: 5px 0;
+    border-radius: 4px;
+  }
+
+  .context-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+
+  .context-menu-item.delete {
+    color: #ff4d4f;
   }
 `;
 

@@ -48,6 +48,7 @@ export default function Login() {
         username,
         password,
       });
+      console.log("API 返回:", data);
       if (data.status === false) {
         toast.error(data.msg, toastOptions);
       }
@@ -56,7 +57,8 @@ export default function Login() {
           process.env.REACT_APP_LOCALHOST_KEY,
           JSON.stringify(data.user)
         );
-
+        console.log("localStorage 内容:", 
+          localStorage.getItem("currentUser"));
         navigate("/Dashboard");
       }
     }

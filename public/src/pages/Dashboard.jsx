@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Logo from '../assets/logo.svg';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { coursesRoute, assignmentsRoute } from '../utils/APIRoutes';
@@ -54,6 +53,7 @@ export default function Dashboard() {
 
   return (
     <OuterContainer>
+
       <Container>
         {/* 顶部区域 */}
         <div className="header">
