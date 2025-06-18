@@ -21,7 +21,7 @@ const initialAssignments = [
 
 function AssignmentSection() {
   const [assignments, setAssignments] = useState(initialAssignments);
-  const [expandedId, setExpandedId] = useState(null);
+  // const [expandedId, setExpandedId] = useState(null); // No longer needed for direct display
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [currentAssignment, setCurrentAssignment] = useState({
@@ -37,10 +37,10 @@ function AssignmentSection() {
     assignmentId: null
   });
 
-  // 切换任务展开状态
-  const handleItemClick = (id) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
+  // 切换任务展开状态 - This function is no longer needed
+  // const handleItemClick = (id) => {
+  //   setExpandedId(expandedId === id ? null : id);
+  // };
 
   // 显示新建表单
   const showAddForm = () => {
@@ -52,6 +52,7 @@ function AssignmentSection() {
     });
     setEditingId(null);
     setShowForm(true);
+    closeContextMenu(); // Close context menu if open
   };
 
   // 显示编辑表单
@@ -82,7 +83,7 @@ function AssignmentSection() {
     if (currentAssignment.course && currentAssignment.task) {
       if (editingId) {
         // 更新现有任务
-        setAssignments(assignments.map(item => 
+        setAssignments(assignments.map(item =>
           item.id === editingId ? { ...item, ...currentAssignment } : item
         ));
       } else {
@@ -115,7 +116,7 @@ function AssignmentSection() {
 
   // 切换任务完成状态
   const toggleCompletion = (id) => {
-    setAssignments(assignments.map(item => 
+    setAssignments(assignments.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
     closeContextMenu();
@@ -178,7 +179,7 @@ function AssignmentSection() {
           </div>
         )}
 
-        {/* 待办事项列表 */}
+        {/* 待办事项列表 - Directly displaying course, task, and details */}
         <div className="assignment-list">
           {assignments.length === 0 && (
             <p className="no-assignments">暂无待办任务</p>
@@ -186,35 +187,25 @@ function AssignmentSection() {
           {assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className={`assignment-item ${expandedId === assignment.id ? 'expanded' : ''} ${assignment.completed ? 'completed' : ''}`}
-              onClick={() => handleItemClick(assignment.id)}
+              className={`assignment-item-direct ${assignment.completed ? 'completed' : ''}`}
               onContextMenu={(e) => handleContextMenu(e, assignment.id)}
             >
-              <div className="assignment-header">
+              <div className="assignment-main-info">
                 <span className="pin-icon">{assignment.completed ? '✅' : '📌'}</span>
-                <span>
+                <span className="course-task-name">
                   {assignment.course} - {assignment.task}
                 </span>
-                <button 
-                  className="edit-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    showEditForm(assignment.id);
-                  }}
-                >
-                  编辑
-                </button>
               </div>
-              <div className="assignment-details">
-                <p>{assignment.details}</p>
-              </div>
+              <p className="assignment-details-visible">
+                {assignment.details}
+              </p>
             </div>
           ))}
         </div>
 
         {/* 右键菜单 */}
         {contextMenu.visible && (
-          <div 
+          <div
             className="context-menu"
             style={{
               left: `${contextMenu.x}px`,
@@ -222,21 +213,21 @@ function AssignmentSection() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div 
+            <div
               className="context-menu-item"
               onClick={() => toggleCompletion(contextMenu.assignmentId)}
             >
-              {assignments.find(a => a.id === contextMenu.assignmentId)?.completed 
-                ? '标记为未完成' 
+              {assignments.find(a => a.id === contextMenu.assignmentId)?.completed
+                ? '标记为未完成'
                 : '标记为已完成'}
             </div>
-            <div 
+            <div
               className="context-menu-item"
               onClick={() => showEditForm(contextMenu.assignmentId)}
             >
               编辑任务
             </div>
-            <div 
+            <div
               className="context-menu-item delete"
               onClick={() => deleteAssignment(contextMenu.assignmentId)}
             >
@@ -252,7 +243,7 @@ function AssignmentSection() {
 const AssignmentSectionStyled = styled.div`
   padding: 1rem 0;
   overflow-y: auto; // 允许垂直滚动
-  
+
   .assignments-section {
     max-width: 800px;
     width: 100%;
@@ -367,11 +358,9 @@ const AssignmentSectionStyled = styled.div`
   }
 
   .assignment-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* This line is already suggested to allow more columns */
-    gap: 1rem; /* Adjust gap as needed */
-    width: 100%; /* Ensure the grid container takes full width */
-    justify-content: start; /* This is often the default, but explicitly setting it can help if other styles interfere. */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Increased gap for separation of rectangular cards */
   }
 
   .no-assignments {
@@ -380,84 +369,72 @@ const AssignmentSectionStyled = styled.div`
     padding: 1rem;
   }
 
-  .assignment-item {
-    width: 100%;
+  /* --- New Styles for Direct Display Task Cards --- */
+  .assignment-item-direct {
     background-color: #f9f9f9;
     border-radius: 8px;
-    padding: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    padding: 15px 20px; /* Adjust padding for "short and thick" feel */
+    min-height: 90px; /* Example: make it "thick" */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distribute content */
+    box-sizing: border-box; /* Include padding in dimensions */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+    transition: all 0.2s ease-in-out;
+    cursor: context-menu; /* Indicate right-click for actions */
 
     &:hover {
       background-color: #f0f0f0;
-    }
-
-    &.expanded {
-      background-color: #e6f0ff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     &.completed {
-      background-color: #f0f0f0;
-      opacity: 0.8; 
-      
-      .assignment-header {
+      background-color: #e6f0ff; /* A lighter background for completed tasks */
+      opacity: 0.8;
+
+      .assignment-main-info, .assignment-details-visible {
         text-decoration: line-through;
         color: #888;
       }
     }
   }
 
-  .assignment-header {
+  .assignment-main-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
+    gap: 0.8rem;
+    font-size: 1.1rem; /* Slightly larger for main info */
     color: #333;
+    font-weight: 600; /* Bolder for prominence */
+    margin-bottom: 8px; /* Space between header and details */
   }
 
   .pin-icon {
-    font-size: 1.2rem;
+    font-size: 1.3rem; /* Slightly larger pin/check icon */
   }
 
-  .edit-button {
-    margin-left: auto;
-    background: none;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.8rem;
-    cursor: pointer;
-
-    &:hover {
-      background-color: #e0e0e0;
-    }
+  .course-task-name {
+    /* No specific styles needed here, inherits from parent */
   }
 
-  .assignment-details {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
-    opacity: 0;
-    margin-top: 0;
-  }
-
-  .assignment-item.expanded .assignment-details {
-    max-height: 200px;
-    opacity: 1;
-    margin-top: 1rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid #ddd;
-  }
-
-  .assignment-details p {
+  .assignment-details-visible {
     margin: 0;
     font-size: 0.9rem;
     color: #555;
     line-height: 1.4;
+    /* Apply truncation if details are too long for the card height */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit to 2 lines, adjust as needed */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+  /* --- End New Styles --- */
 
-  /* 右键菜单样式 */
+
+  /* Old .assignment-item, .assignment-header, .edit-button, .assignment-details rules removed as they are replaced or no longer needed */
+
+  /* Right-click menu styles remain the same */
   .context-menu {
     position: fixed;
     background: white;
@@ -495,19 +472,16 @@ const AssignmentSectionStyled = styled.div`
       gap: 0.5rem;
     }
 
-    .assignment-list {
-        grid-template-columns: 1fr;
-    }
-
-    .assignment-item {
+    .assignment-item-direct { /* Apply to the new card style */
       padding: 0.8rem;
+      min-height: 80px; /* Adjust for smaller screens */
     }
 
-    .assignment-header {
-      font-size: 0.95rem;
+    .assignment-main-info {
+      font-size: 1rem;
     }
 
-    .assignment-details p {
+    .assignment-details-visible {
       font-size: 0.85rem;
     }
   }
