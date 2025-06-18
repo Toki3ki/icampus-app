@@ -105,7 +105,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-
+        
         <div className="course-section-container">
             {/* 课程列表区域，使用 CourseSection 组件 */}
             <CourseSection courses={courses} />

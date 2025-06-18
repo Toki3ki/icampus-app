@@ -57,8 +57,7 @@ export default function Login() {
           process.env.REACT_APP_LOCALHOST_KEY,
           JSON.stringify(data.user)
         );
-        console.log("localStorage 内容:", 
-          localStorage.getItem("currentUser"));
+        console.log("localStorage 内容:", localStorage.getItem("currentUser"));
         navigate("/Dashboard");
       }
     }

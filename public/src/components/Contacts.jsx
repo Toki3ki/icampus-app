@@ -129,7 +129,7 @@ const Container = styled.div`
   }
 
   .current-user {
-    background-color:rgba(255, 255, 255, 0.48);Add commentMore actions
+    background-color:rgba(255, 255, 255, 0.48);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: center;

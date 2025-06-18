@@ -171,7 +171,7 @@ const Container = styled.div`
     .sended {
       justify-content: flex-end;
       .content {
-        background-color:#9a86f3;Add commentMore actions
+        background-color:#9a86f3;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
     }

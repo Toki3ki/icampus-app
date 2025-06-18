@@ -159,7 +159,7 @@ const Container = styled.div`
   }
 
   .submit-btn {
-    background-color: rgb(210, 147, 127);Add commentMore actions
+    background-color: rgb(210, 147, 127);
     color: rgb(72, 61, 57);
     padding: 1rem 2rem;
     border: none;
