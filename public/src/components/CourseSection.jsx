@@ -120,7 +120,7 @@ function CourseSection({ allCourses, enrolledCourses, onToggleEnrollment }) {
                     className={isCourseEnrolled(course._id) ? 'added' : 'add'}
                     onClick={() => handleToggle(course._id)}
                   >
-                    {isCourseEnrolled(course._id) ? '已添加' : '添加'}
+                    {isCourseEnrolled(course._id) ? '退课' : '选课'}
                   </button>
                 </div>
               ))
