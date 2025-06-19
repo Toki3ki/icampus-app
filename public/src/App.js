@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import TeamSpace from "./pages/TeamSpace"; 
 import TeamAssignment from "./pages/TeamAssignment"; 
 import TeacherDashboard from "./pages/TeacherDashboard"; 
+import AssignmentSubmited from "./pages/AssignmentSubmited"; // 新增
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -20,6 +22,7 @@ export default function App() {
         <Route path="/teamspace" element={<TeamSpace />} /> {/* 新增 */}
         <Route path="/teamassignment" element={<TeamAssignment />} /> {/* 新增 */}
         <Route path="/teacherDashboard" element={<TeacherDashboard />} /> {/* 教师端仪表盘 */}
+        <Route path="/assignmentsubmited" element={<AssignmentSubmited />} /> {/* 新增 */}
       </Routes>
     </BrowserRouter>
   );
