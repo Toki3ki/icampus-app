@@ -5,6 +5,8 @@ const {
     getTeacherCourses,
     getStudentCourses,
     getCourseDetails,
+    enrollCourse,
+    unenrollCourse,
 } = require("../controllers/courseController");
 
 const router = require("express").Router();
@@ -31,6 +33,8 @@ const verifyStudent = (req, res, next) => {
 
 router.get("/courses/:userId", getCourses);
 router.get("/assignments/:courseId", getAssignments);
+// 获取所有课程列表 (不需要登录)
+router.get("/courses", getCourses);
 // 学生获取课程详情
 router.get("/getstudentcourses", verifyToken, verifyStudent, getStudentCourses);
 // 教师添加课程
@@ -39,6 +43,10 @@ router.post("/addcourse", verifyToken, verifyTeacher, addCourse);
 router.get("/getteachercourses", verifyToken, verifyTeacher, getTeacherCourses);
 // 获取单个课程的详细信息
 router.get("/getcoursedetails/:courseId", verifyToken, getCourseDetails);
+// 学生选课 (需要登录且是学生)
+router.post("/enrollcourse", verifyToken, verifyStudent, enrollCourse);
+// 学生退课 (需要登录且是学生)
+router.post("/unenrollcourse", verifyToken, verifyStudent, unenrollCourse);
 
 
 module.exports = router;

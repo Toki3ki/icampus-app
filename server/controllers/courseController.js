@@ -2,21 +2,30 @@ const Course = require("../models/courseModel");
 const Assignment = require("../models/assignmentModel");
 const User = require("../models/userModel");
 
-module.exports.getCourses = async (req, res, next) => {
+module.exports.getCourses = async (req, res, next) => { // 可以考虑将此函数名修改为 getPublicCourses 或 getAllCoursesPublic
   try {
-    const userId = req.params.userId;
-    const courses = await Course.find({ userId }).select([
-      "name",
-      "description",
-      "location",
-      "teacher",
-      "schedule",
-      "_id", 
-      "createdAt", 
-    ]);
-    return res.json(courses);
+    const courses = await Course.find({}) // 查询所有课程
+      .select([
+        "name",
+        "description",
+        "location",
+        "schedule",
+        "_id",
+        "createdAt", // 可以包含创建时间
+      ])
+      .populate("teacher", "username"); // 填充授课教师的用户名，因为这是公开信息
+
+    // 如果没有找到课程，返回空数组或特定消息
+    if (!courses || courses.length === 0) {
+      return res.status(200).json({ status: true, msg: "No courses available yet.", courses: [] });
+    }
+
+    return res.status(200).json({ status: true, courses });
   } catch (ex) {
-    next(ex);
+    console.error("Error fetching public courses:", ex);
+    // 对于公开接口的错误，返回通用错误信息，避免暴露后端细节
+    res.status(500).json({ status: false, msg: "Failed to retrieve courses. Please try again later." });
+    next(ex); // 继续传递错误给Express的全局错误处理器
   }
 };
 
@@ -128,12 +137,78 @@ module.exports.getStudentCourses = async (req, res, next) => {
         "teacher",
         "schedule",
         "_id", // 返回课程ID
-        "createdAt", // 返回创建时间 (如果需要)
       ])
-      .populate("teacher", "username email"); // 填充授课教师的 username 和 email
+      .populate("teacher", "username");
 
     return res.status(200).json({ status: true, courses }); // 返回 status: true 和 courses 数组
   } catch (ex) {
+    console.error("Error getting all courses:", ex);
+    next(ex);
+  }
+};
+
+// 新增：学生选课
+module.exports.enrollCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.body;
+    const studentId = req.user._id; // 从 JWT 获取学生ID，更安全可靠
+
+    // 验证用户角色，确保是学生才能选课（可选，但推荐）
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ status: false, msg: "Access Denied: Only students can enroll in courses." });
+    }
+
+    // 查找课程
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ status: false, msg: "Course not found." });
+    }
+
+    // 检查学生是否已经选过该课程
+    if (course.students.includes(studentId)) {
+      return res.status(400).json({ status: false, msg: "Student already enrolled in this course." });
+    }
+
+    // 添加学生ID到课程的 students 数组
+    course.students.push(studentId);
+    await course.save();
+
+    return res.status(200).json({ status: true, msg: "Course enrolled successfully." });
+  } catch (ex) {
+    console.error("Error enrolling course:", ex);
+    next(ex);
+  }
+};
+
+// 新增：学生退课
+module.exports.unenrollCourse = async (req, res, next) => {
+  try {
+    const { courseId } = req.body;
+    const studentId = req.user._id; // 从 JWT 获取学生ID
+
+    // 验证用户角色
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ status: false, msg: "Access Denied: Only students can unenroll from courses." });
+    }
+
+    // 查找课程
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ status: false, msg: "Course not found." });
+    }
+
+    // 检查学生是否已选该课程
+    if (!course.students.includes(studentId)) {
+      return res.status(400).json({ status: false, msg: "Student is not enrolled in this course." });
+    }
+
+    // 从学生的已选课程数组中移除课程ID
+    course.students.pull(studentId); // 使用 pull 方法移除 ObjectId
+    await course.save();
+
+    return res.status(200).json({ status: true, msg: "Course unenrolled successfully." });
+  } catch (ex) {
+    console.error("Error unenrolling course:", ex);
     next(ex);
   }
 };

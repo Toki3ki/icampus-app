@@ -1,27 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 // 静态数据（仅用于测试，可移除如果完全使用 props）
-const initialCourses = [
-  { id: '1', name: '现代软件开发方法', nameEn: 'Modern Software Dev', hasUpdate: true, progress: 75 },
-  { id: '2', name: '高性能计算编程', nameEn: 'High-Performance Computing', hasUpdate: false, progress: 60 },
-  { id: '3', name: '计算机图形学', nameEn: 'Computer Graphics', hasUpdate: false, progress: 45 },
-  { id: '4', name: '计算机动画', nameEn: 'Computer Animation', hasUpdate: false, progress: 80 },
-  { id: '5', name: 'GPU架构与编程', nameEn: 'GPU', hasUpdate: false, progress: 10 },
-  { id: '6', name: '工程伦理', nameEn: 'ProjectTheory', hasUpdate: false, progress: 90 },
-  { id: '7', name: '英语A', nameEn: 'English A', hasUpdate: false, progress: 20 },
-];
+// const initialCourses = [
+//   { id: '1', name: '现代软件开发方法', nameEn: 'Modern Software Dev', hasUpdate: true, progress: 75 },
+//   { id: '2', name: '高性能计算编程', nameEn: 'High-Performance Computing', hasUpdate: false, progress: 60 },
+//   { id: '3', name: '计算机图形学', nameEn: 'Computer Graphics', hasUpdate: false, progress: 45 },
+//   { id: '4', name: '计算机动画', nameEn: 'Computer Animation', hasUpdate: false, progress: 80 },
+//   { id: '5', name: 'GPU架构与编程', nameEn: 'GPU', hasUpdate: false, progress: 10 },
+//   { id: '6', name: '工程伦理', nameEn: 'ProjectTheory', hasUpdate: false, progress: 90 },
+//   { id: '7', name: '英语A', nameEn: 'English A', hasUpdate: false, progress: 20 },
+// ];
 
-function CourseSection({ courses = initialCourses }) {
+function CourseSection({ allCourses, enrolledCourses, onToggleEnrollment }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [addedCourses, setAddedCourses] = useState([]);
+  // const [addedCourses, setAddedCourses] = useState([]);
 
   // 搜索课程
-  const filteredCourses = courses.filter(
+  // const filteredCourses = courses.filter(
+  //   (course) =>
+  //     course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     course.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
+  const filteredCourses = allCourses.filter(
     (course) =>
       course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
+      (course.description && course.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (course.teacher && course.teacher.username.toLowerCase().includes(searchQuery.toLowerCase())) // 也可以搜索老师名
   );
 
   // 处理搜索输入
@@ -41,20 +47,34 @@ function CourseSection({ courses = initialCourses }) {
   };
 
   // 添加或移除课程
-  const toggleCourse = (course) => {
-    if (addedCourses.some((c) => c.id === course.id)) {
-      setAddedCourses(addedCourses.filter((c) => c.id !== course.id));
-    } else {
-      setAddedCourses([...addedCourses, course]);
-    }
+  // const toggleCourse = (course) => {
+  //   if (addedCourses.some((c) => c.id === course.id)) {
+  //     setAddedCourses(addedCourses.filter((c) => c.id !== course.id));
+  //   } else {
+  //     setAddedCourses([...addedCourses, course]);
+  //   }
+  // };
+    // 判断课程是否已添加 (已选)
+  const isCourseEnrolled = (courseId) => {
+    return enrolledCourses.some((c) => c._id === courseId);
+  };
+
+  // 切换课程选课状态（调用父组件的 onToggleEnrollment）
+  const handleToggle = (courseId) => {
+    const enrolling = !isCourseEnrolled(courseId); // 判断是选课还是退课
+    onToggleEnrollment(courseId, enrolling);
   };
 
   // 排序课程：未添加的在上，已添加的在下
-  const sortedCourses = (searchQuery ? filteredCourses : courses).sort((a, b) => {
-    const isAAdded = addedCourses.some((c) => c.id === a.id);
-    const isBAdded = addedCourses.some((c) => c.id === b.id);
-    if (isAAdded && !isBAdded) return 1;
-    if (!isAAdded && isBAdded) return -1;
+  const sortedCourses = (searchQuery ? filteredCourses : allCourses).sort((a, b) => {
+    // const isAAdded = addedCourses.some((c) => c.id === a.id);
+    // const isBAdded = addedCourses.some((c) => c.id === b.id);
+    const isAEnrolled = isCourseEnrolled(a._id);
+    const isBEnrolled = isCourseEnrolled(b._id);
+    // if (isAAdded && !isBAdded) return 1;
+    if (isAEnrolled && !isBEnrolled) return 1; // A 已选，B 未选，A 排在后
+    // if (!isAAdded && isBAdded) return -1;
+    if (!isAEnrolled && isBEnrolled) return -1; // A 未选，B 已选，A 排在前
     return 0;
   });
 
@@ -75,7 +95,8 @@ function CourseSection({ courses = initialCourses }) {
           placeholder="在这里添加你感兴趣的课程！ / Enter the course name you are interested in"
           value={searchQuery}
           onChange={handleSearchChange}
-          onClick={handleSearchClick}
+          // onClick={handleSearchClick}
+          onFocus={() => setShowDropdown(true)} // 聚焦时显示下拉框
           onBlur={handleSearchBlur}
         />
         {/* <button className="search-button" onClick={handleSearchConfirm}>
@@ -85,43 +106,52 @@ function CourseSection({ courses = initialCourses }) {
             <span className="search-text">Search</span>
         </button> */}
 
-        {/* 下拉框 */}
+        {/* 下拉框：显示所有或过滤后的课程，并允许选课/退课 */}
         {showDropdown && (
           <div className="dropdown">
-            {sortedCourses.map((course) => (
-              <div key={course.id} className="dropdown-item">
-                <span>
-                  {course.name} / {course.nameEn}
-                </span>
-                <button
-                  className={addedCourses.some((c) => c.id === course.id) ? 'added' : 'add'}
-                  onClick={() => toggleCourse(course)}
-                >
-                  {addedCourses.some((c) => c.id === course.id) ? '已添加' : '添加'}
-                </button>
+            {sortedCourses.length > 0 ? (
+              sortedCourses.map((course) => (
+                <div key={course._id} className="dropdown-item">
+                  <span>
+                    {course.name} {course.location ? `/ ${course.location}` : ''}
+                    {course.teacher && ` / 教师: ${course.teacher.username}`}
+                  </span>
+                  <button
+                    className={isCourseEnrolled(course._id) ? 'added' : 'add'}
+                    onClick={() => handleToggle(course._id)}
+                  >
+                    {isCourseEnrolled(course._id) ? '已添加' : '添加'}
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="dropdown-item no-results">
+                {searchQuery ? '无匹配课程' : '暂无可用课程'}
               </div>
-            ))}
-            {(searchQuery ? filteredCourses : courses).length === 0 && (
-              <div className="dropdown-item no-results">无匹配课程</div>
             )}
           </div>
         )}
       </div>
+
+      {/* 显示学生已选的课程卡片 */}
       <div className="course-list">
-          {addedCourses.map((course) => (
-            <div key={course.id} className="course-card">
-              {course.hasUpdate && <span className="update-dot" />}
-              <h3>
-                {course.name} / {course.nameEn}
-              </h3>
-              <div className="progress-bar">
-                <div style={{ width: `${course.progress}%` }} />
-              </div>
-            </div>
-          ))}
-          {addedCourses.length === 0 && (
+          {enrolledCourses.length === 0 && (
             <p className="no-courses">尚未添加课程</p>
           )}
+          {enrolledCourses.map((course) => (
+            <div key={course._id} className="course-card">
+              {/* 根据你的 Course Model 字段调整显示，例如移除 hasUpdate 和 progress */}
+              {/* <span className="update-dot" /> */}
+              <h3>
+                {course.name}
+              </h3>
+              <p>地点: {course.location}</p>
+              {course.teacher && <p>教师: {course.teacher.username}</p>}
+              {/* <div className="progress-bar">
+                <div style={{ width: `${course.progress || 0}%` }} />
+              </div> */}
+            </div>
+          ))}
         </div>
     </CourseSectionStyled>
   );
@@ -197,17 +227,19 @@ const CourseSectionStyled = styled.div`
   }
 
   .dropdown-item button.add {
-    background-color: #f28c38; /* 橘色 */
+    background-color: #28a745; /* 新增课程使用绿色 */
     color: #fff;
     &:hover {
-      background-color: #e07b30;
+      background-color: #218838;
     }
   }
 
   .dropdown-item button.added {
-    background-color: #ccc; /* 灰色 */
+    background-color: #dc3545; /* 已添加的课程使用红色（表示退选）*/
     color: #fff;
-    cursor: not-allowed;
+    &:hover {
+      background-color: #c82333;
+    }
   }
 
   /* 课程列表区域 */

@@ -3,11 +3,20 @@ import styled from 'styled-components';
 import Logo from '../assets/logo.svg';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { coursesRoute, assignmentsRoute } from '../utils/APIRoutes';
+import { 
+  getCoursesRoute,
+  assignmentsRoute,
+  studentcoursesRoute,
+  enrollCourseRoute,
+  unenrollCourseRoute,
+  courseDetailsRoute,
+} from '../utils/APIRoutes';
+import { toast, ToastContainer } from 'react-toastify'; 
 import Logout from '../components/Logout';
 import CourseSection from '../components/CourseSection';
 import AssignmentSection from '../components/AssignmentSection';
 import BackgroundImage from '../assets/bg_mln.jpg';
+
 
 // 模拟用户头像（黑白插图）
 const userAvatar =
@@ -17,17 +26,28 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [currentUserName, setCurrentUserName] = useState(undefined);
   const [currentUserImage, setCurrentUserImage] = useState(undefined);
+  const [currentUserId, setCurrentUserId] = useState(undefined); // 学生 ID
+  const [enrolledCourses, setEnrolledCourses] = useState([]); // 学生已选课程
+  const [allAvailableCourses, setAllAvailableCourses] = useState([]); // 所有可用课程
+
+  const toastOptions = {
+    position: "bottom-right",
+    autoClose: 8000,
+    pauseOnHover: true,
+    draggable: true,
+    theme: "dark",
+  };
 
   // 模拟课程和任务数据（可替换为从后台获取）
-  const [courses] = useState([
-    { id: '1', name: '现代软件开发方法', nameEn: 'Modern Software Dev', hasUpdate: true, progress: 75 },
-    { id: '2', name: '高性能计算编程', nameEn: 'High-Performance Computing', hasUpdate: false, progress: 60 },
-    { id: '3', name: '计算机图形学', nameEn: 'Computer Graphics', hasUpdate: false, progress: 45 },
-    { id: '4', name: '计算机动画', nameEn: 'Computer Animation', hasUpdate: false, progress: 80 },
-    { id: '5', name: 'GPU架构与编程', nameEn: 'GPU', hasUpdate: false, progress: 10 },
-    { id: '6', name: '工程伦理', nameEn: 'ProjectTheory', hasUpdate: false, progress: 90 },
-    { id: '7', name: '英语A', nameEn: 'English A', hasUpdate: false, progress: 20 },
-  ]);
+  // const [courses] = useState([
+  //   { id: '1', name: '现代软件开发方法', nameEn: 'Modern Software Dev', hasUpdate: true, progress: 75 },
+  //   { id: '2', name: '高性能计算编程', nameEn: 'High-Performance Computing', hasUpdate: false, progress: 60 },
+  //   { id: '3', name: '计算机图形学', nameEn: 'Computer Graphics', hasUpdate: false, progress: 45 },
+  //   { id: '4', name: '计算机动画', nameEn: 'Computer Animation', hasUpdate: false, progress: 80 },
+  //   { id: '5', name: 'GPU架构与编程', nameEn: 'GPU', hasUpdate: false, progress: 10 },
+  //   { id: '6', name: '工程伦理', nameEn: 'ProjectTheory', hasUpdate: false, progress: 90 },
+  //   { id: '7', name: '英语A', nameEn: 'English A', hasUpdate: false, progress: 20 },
+  // ]);
 
   const [assignments] = useState([
     { id: '1', course: 'HPC', task: 'Homework 1' },
@@ -49,8 +69,80 @@ export default function Dashboard() {
       }
       setCurrentUserName(data.username);
       setCurrentUserImage(data.avatarImage);
+      setCurrentUserId(data._id); // 保存学生用户 ID
+      // 验证用户是否已登录
+      const token = localStorage.getItem(process.env.REACT_APP_TOKEN_KEY);
+      if (!token) {
+          toast.error("Authentication token missing. Please log in again.", toastOptions);
+          navigate('/login');
+          return;
+      }
+      try {
+        // 1. 获取所有可用课程
+        const allCoursesRes = await axios.get(getCoursesRoute, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (allCoursesRes.data.status) {
+          setAllAvailableCourses(allCoursesRes.data.courses);
+        } else {
+          toast.error("Failed to load all courses: " + allCoursesRes.data.msg, toastOptions);
+        }
+
+        // 2. 获取学生已选课程
+        const studentCoursesRes = await axios.get(studentcoursesRoute, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (studentCoursesRes.data.status) {
+          setEnrolledCourses(studentCoursesRes.data.courses);
+        } else {
+          toast.error("Failed to load your enrolled courses: " + studentCoursesRes.data.msg, toastOptions);
+        }
+
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+        toast.error("Failed to load courses. Please try again later.", toastOptions);
+      }
     })();
   }, [navigate]);
+
+  // 处理学生选课/退课逻辑，并更新状态和数据库
+  const handleToggleEnrollment = async (courseId, isEnrolling) => {
+    const token = localStorage.getItem(process.env.REACT_APP_TOKEN_KEY);
+    if (!token || !currentUserId) {
+        toast.error("User not authenticated. Please log in.", toastOptions);
+        navigate('/login');
+        return;
+    }
+
+    try {
+      let response;
+      if (isEnrolling) { // 选课
+        response = await axios.post(enrollCourseRoute, { courseId }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else { // 退课
+        response = await axios.post(unenrollCourseRoute, { courseId }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      if (response.data.status) {
+        toast.success(response.data.msg, toastOptions);
+        // 成功后，重新获取学生已选课程列表，以更新 UI
+        const studentCoursesRes = await axios.get(studentcoursesRoute, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (studentCoursesRes.data.status) {
+          setEnrolledCourses(studentCoursesRes.data.courses);
+        }
+      } else {
+        toast.error(response.data.msg, toastOptions);
+      }
+    } catch (error) {
+      console.error("Error toggling enrollment:", error);
+      toast.error("Failed to update course enrollment. Please try again.", toastOptions);
+    }
+  };
 
   return (
     <OuterContainer>
@@ -108,7 +200,14 @@ export default function Dashboard() {
         
         <div className="course-section-container">
             {/* 课程列表区域，使用 CourseSection 组件 */}
-            <CourseSection courses={courses} />
+            {/* <CourseSection courses={courses} /> */}
+            {/* 将 allAvailableCourses 和 enrolledCourses 传递给 CourseSection */}
+            {/* 同时传递 handleToggleEnrollment 回调函数 */}
+            <CourseSection
+                allCourses={allAvailableCourses}
+                enrolledCourses={enrolledCourses}
+                onToggleEnrollment={handleToggleEnrollment}
+            />
         </div>
 
        <div className="assignment-section-container">
@@ -117,6 +216,8 @@ export default function Dashboard() {
         </div>
 
       </Container>
+      <ToastContainer /> 
+      {/* 确保 ToastContainer 在页面底部 */}
     </OuterContainer>
   );
 }
