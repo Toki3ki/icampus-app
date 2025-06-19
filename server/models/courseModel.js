@@ -10,6 +10,11 @@ const courseSchema = new mongoose.Schema({
     type: String,
     max: 500,
   },
+  location: {
+    type: String,
+    required: true,
+    max: 200,
+  },
   teacher:{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Users",
