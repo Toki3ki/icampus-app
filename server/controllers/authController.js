@@ -76,3 +76,49 @@ module.exports.login = async (req, res, next) => {
     next(ex);
   }
 };
+
+module.exports.register = async (req, res, next) => {
+  try {
+    // 确保接收 role 字段 (前端 Register.jsx 也要发送 role)
+    const { username, email, password, role } = req.body;
+    const usernameCheck = await User.findOne({ username });
+    if (usernameCheck)
+      return res.json({ msg: "Username already used", status: false });
+    const emailCheck = await User.findOne({ email });
+    if (emailCheck)
+      return res.json({ msg: "Email already used", status: false });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      role: role || 'student', // 如果前端没有传 role，默认为 'student'
+    });
+
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password; // 注册成功后不返回密码哈希
+
+    // ****** 新增：生成 JWT Token ******
+    const token = jwt.sign(
+      { _id: user._id, username: user.username, role: user.role },
+      process.env.JWT_SECRET_KEY, // 确保在 .env 中设置了 JWT_SECRET_KEY
+      { expiresIn: '1h' } // Token 有效期
+    );
+    // **********************************
+
+    // 返回 token 给前端
+    return res.json({
+      status: true,
+      user: userWithoutPassword,
+      token: token, // 新增：返回 JWT token
+    });
+  } catch (ex) {
+    console.error("Error during registration:", ex); // 更好的错误日志
+    if (ex.name === 'ValidationError') {
+        const errors = Object.values(ex.errors).map(el => el.message);
+        return res.status(400).json({ status: false, msg: `Registration failed: ${errors.join(', ')}` });
+    }
+    next(ex); // 传递错误给 Express 的全局错误处理器
+  }
+};
