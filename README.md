@@ -1,7 +1,5 @@
 # Icampus - Team Application 
-Icampus. You can find the tutorial [here](https://www.youtube.com/watch?v=otaQKODEUFs)
-
-
+Icampus. 
 ![login page](./images/icampus_login.png)
 
 ![home page](./images/icampus.png)
